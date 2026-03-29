@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Matrix Multiplication Practice</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.css" crossorigin="anonymous">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.22/dist/katex.min.js" crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #app {
+            max-width: 420px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding-top: 16px;
+        }
+
+        h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #8b949e;
+            letter-spacing: 0.5px;
+        }
+
+        /* Dimension controls */
+        #dimensions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #dimensions select {
+            background: #161b22;
+            color: #e6edf3;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 16px;
+            appearance: none;
+            -webkit-appearance: none;
+            text-align: center;
+            width: 48px;
+        }
+
+        #dimensions select:disabled {
+            opacity: 0.4;
+            color: #484f58;
+        }
+
+        #dimensions .dim-label {
+            font-size: 14px;
+            color: #8b949e;
+        }
+
+        #btn-random {
+            background: #238636;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        #btn-random.inactive {
+            background: #21262d;
+            color: #8b949e;
+            border: 1px solid #30363d;
+        }
+
+        /* Problem display */
+        #problem {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+            overflow-x: auto;
+            padding: 4px 0;
+        }
+
+        #problem.stacked {
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .operator {
+            font-size: 22px;
+            color: #8b949e;
+            font-weight: 300;
+        }
+
+        /* KaTeX dark theme */
+        .katex { color: #e6edf3; }
+
+        /* Answer section */
+        #answer-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #answer-label {
+            font-size: 13px;
+            color: #484f58;
+            margin-bottom: 4px;
+        }
+
+
+        #answer-matrix {
+            display: inline-grid;
+            gap: 6px;
+            padding: 12px 20px;
+            position: relative;
+            border-left: 2.5px solid #e6edf3;
+            border-right: 2.5px solid #e6edf3;
+        }
+
+        #answer-matrix::before,
+        #answer-matrix::after {
+            content: '';
+            position: absolute;
+            left: -2.5px;
+            right: -2.5px;
+            height: 8px;
+            border-left: 2.5px solid #e6edf3;
+            border-right: 2.5px solid #e6edf3;
+        }
+
+        #answer-matrix::before {
+            top: -1px;
+            border-top: 2.5px solid #e6edf3;
+        }
+
+        #answer-matrix::after {
+            bottom: -1px;
+            border-bottom: 2.5px solid #e6edf3;
+        }
+
+        #answer-matrix input {
+            width: 52px;
+            height: 44px;
+            text-align: center;
+            font-size: 18px;
+            background: #161b22;
+            color: #e6edf3;
+            border: 1.5px solid #30363d;
+            border-radius: 4px;
+            outline: none;
+            -moz-appearance: textfield;
+        }
+
+        #answer-matrix input::-webkit-outer-spin-button,
+        #answer-matrix input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        #answer-matrix input:focus {
+            border-color: #58a6ff;
+            box-shadow: 0 0 0 2px rgba(88, 166, 255, 0.3);
+        }
+
+        /* Feedback states */
+        #answer-matrix.correct {
+            border-color: #3fb950;
+        }
+        #answer-matrix.correct::before,
+        #answer-matrix.correct::after {
+            border-color: #3fb950;
+        }
+
+        #answer-matrix.wrong {
+            border-color: #f85149;
+        }
+        #answer-matrix.wrong::before,
+        #answer-matrix.wrong::after {
+            border-color: #f85149;
+        }
+
+        #answer-matrix input.cell-correct {
+            border-color: #3fb950;
+            background: #0d2117;
+        }
+
+        #answer-matrix input.cell-wrong {
+            border-color: #f85149;
+            background: #3d1214;
+        }
+
+        /* Feedback text */
+        #feedback {
+            font-size: 18px;
+            font-weight: 600;
+            min-height: 28px;
+            text-align: center;
+        }
+
+        #feedback.correct { color: #3fb950; }
+        #feedback.wrong { color: #f85149; }
+
+        /* Buttons */
+        #buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #buttons button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.15s;
+        }
+
+        #buttons button:active {
+            opacity: 0.8;
+        }
+
+        #btn-new {
+            background: #238636;
+            color: #fff;
+        }
+
+        #btn-submit {
+            background: #1f6feb;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1>MATRIX MULTIPLICATION</h1>
+
+        <div id="dimensions">
+            <button id="btn-random">Random</button>
+            <span class="dim-label">(</span>
+            <select id="dimM" disabled></select>
+            <span class="dim-label">&times;</span>
+            <select id="dimN" disabled></select>
+            <span class="dim-label">)  &times;  (</span>
+            <select id="dimN2" disabled></select>
+            <span class="dim-label">&times;</span>
+            <select id="dimK" disabled></select>
+            <span class="dim-label">)</span>
+        </div>
+
+        <div id="problem">
+            <span id="matA"></span>
+            <span class="operator">&times;</span>
+            <span id="matB"></span>
+            <span class="operator">=</span>
+        </div>
+
+        <div id="answer-section">
+            <div id="answer-label"></div>
+            <div id="answer-matrix"></div>
+        </div>
+
+        <div id="feedback" role="alert"></div>
+
+        <div id="buttons">
+            <button id="btn-submit">Submit</button>
+            <button id="btn-new">New Problem</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for KaTeX to load
+        function onReady(fn) {
+            if (typeof katex !== 'undefined') return fn();
+            const id = setInterval(() => {
+                if (typeof katex !== 'undefined') { clearInterval(id); fn(); }
+            }, 50);
+        }
+
+        onReady(() => {
+            // State
+            let M, N, K;
+            let matA, matB, correctAnswer;
+            let submitted = false;
+            let advanceTimer = null;
+            let randomMode = true;
+
+            // DOM elements
+            const dimM = document.getElementById('dimM');
+            const dimN = document.getElementById('dimN');
+            const dimN2 = document.getElementById('dimN2');
+            const dimK = document.getElementById('dimK');
+            const btnRandom = document.getElementById('btn-random');
+            const problemEl = document.getElementById('problem');
+            const matAEl = document.getElementById('matA');
+            const matBEl = document.getElementById('matB');
+            const answerLabel = document.getElementById('answer-label');
+            const answerMatrix = document.getElementById('answer-matrix');
+            const feedbackEl = document.getElementById('feedback');
+            const btnSubmit = document.getElementById('btn-submit');
+            const btnNew = document.getElementById('btn-new');
+
+            // Populate selects
+            [dimM, dimN, dimN2, dimK].forEach(sel => {
+                for (let i = 1; i <= 4; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    sel.appendChild(opt);
+                }
+                sel.value = 2;
+            });
+
+            // Sync N and N2 (shared inner dimension)
+            dimN.addEventListener('change', () => { dimN2.value = dimN.value; generateProblem(); });
+            dimN2.addEventListener('change', () => { dimN.value = dimN2.value; generateProblem(); });
+            dimM.addEventListener('change', generateProblem);
+            dimK.addEventListener('change', generateProblem);
+
+            // Random toggle
+            btnRandom.addEventListener('click', () => {
+                randomMode = !randomMode;
+                updateRandomState();
+                generateProblem();
+            });
+
+            function updateRandomState() {
+                if (randomMode) {
+                    btnRandom.classList.remove('inactive');
+                    [dimM, dimN, dimN2, dimK].forEach(s => s.disabled = true);
+                } else {
+                    btnRandom.classList.add('inactive');
+                    [dimM, dimN, dimN2, dimK].forEach(s => s.disabled = false);
+                }
+            }
+
+            // Random integer in [lo, hi]
+            function randInt(lo, hi) {
+                return Math.floor(Math.random() * (hi - lo + 1)) + lo;
+            }
+
+            // Generate random matrix
+            function randomMatrix(rows, cols) {
+                const mat = [];
+                for (let i = 0; i < rows; i++) {
+                    const row = [];
+                    for (let j = 0; j < cols; j++) {
+                        row.push(randInt(-5, 5));
+                    }
+                    mat.push(row);
+                }
+                return mat;
+            }
+
+            // Multiply matrices
+            function multiply(a, b) {
+                const rows = a.length, inner = a[0].length, cols = b[0].length;
+                const result = [];
+                for (let i = 0; i < rows; i++) {
+                    const row = [];
+                    for (let j = 0; j < cols; j++) {
+                        let sum = 0;
+                        for (let k = 0; k < inner; k++) {
+                            sum += a[i][k] * b[k][j];
+                        }
+                        row.push(sum);
+                    }
+                    result.push(row);
+                }
+                return result;
+            }
+
+            // Convert 2D array to LaTeX bmatrix
+            function matrixToLatex(mat) {
+                return '\\begin{bmatrix}' +
+                    mat.map(row => row.join(' & ')).join(' \\\\ ') +
+                    '\\end{bmatrix}';
+            }
+
+            // Render problem
+            function renderProblem() {
+                const totalCols = N + K;
+                const stacked = totalCols > 5;
+
+                problemEl.classList.toggle('stacked', stacked);
+
+                // Adjust font size for large matrices
+                let fontSize = '1.1em';
+                const maxDim = Math.max(M, N, K);
+                if (maxDim >= 4) fontSize = '0.85em';
+                else if (maxDim >= 3) fontSize = '0.95em';
+
+                const renderOpts = { throwOnError: false, displayMode: false };
+
+                matAEl.style.fontSize = fontSize;
+                matBEl.style.fontSize = fontSize;
+
+                katex.render(matrixToLatex(matA), matAEl, renderOpts);
+                katex.render(matrixToLatex(matB), matBEl, renderOpts);
+            }
+
+            // Render answer grid
+            function renderAnswerGrid() {
+                answerMatrix.innerHTML = '';
+                answerMatrix.className = '';
+                answerMatrix.style.gridTemplateColumns = `repeat(${K}, 52px)`;
+
+                const totalCells = M * K;
+                for (let idx = 0; idx < totalCells; idx++) {
+                    const r = Math.floor(idx / K);
+                    const c = idx % K;
+
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.setAttribute('data-row', r);
+                    input.setAttribute('data-col', c);
+                    input.setAttribute('aria-label', `Row ${r + 1}, Column ${c + 1}`);
+
+                    input.addEventListener('input', () => onCellInput(input, idx));
+                    input.addEventListener('keydown', (e) => onCellKeydown(e, idx));
+
+                    answerMatrix.appendChild(input);
+                }
+
+                answerLabel.textContent = `${M} × ${K} result`;
+
+                // Focus first cell
+                const first = answerMatrix.querySelector('input');
+                if (first) setTimeout(() => first.focus(), 100);
+            }
+
+            function onCellInput(input, idx) {
+                if (submitted) return;
+                clearTimeout(advanceTimer);
+
+                const val = input.value;
+                // Don't advance if empty or just a minus sign
+                if (val === '' || val === '-') return;
+
+                // Check if it's a valid integer
+                if (/^-?\d+$/.test(val)) {
+                    advanceTimer = setTimeout(() => advanceFrom(idx), 600);
+                }
+            }
+
+            function onCellKeydown(e, idx) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    clearTimeout(advanceTimer);
+                    if (submitted) return;
+                    advanceFrom(idx);
+                }
+            }
+
+            function advanceFrom(idx) {
+                if (submitted) return;
+                const inputs = answerMatrix.querySelectorAll('input');
+                const nextIdx = idx + 1;
+
+                if (nextIdx < inputs.length) {
+                    inputs[nextIdx].focus();
+                    inputs[nextIdx].select();
+                }
+            }
+
+            function checkAnswer() {
+                const inputs = answerMatrix.querySelectorAll('input');
+
+                // Check all cells are filled
+                const allFilled = Array.from(inputs).every(inp => /^-?\d+$/.test(inp.value));
+                if (!allFilled) {
+                    feedbackEl.textContent = 'Fill all cells first';
+                    feedbackEl.className = 'wrong';
+                    return;
+                }
+
+                let allCorrect = true;
+
+                inputs.forEach(input => {
+                    const r = parseInt(input.dataset.row);
+                    const c = parseInt(input.dataset.col);
+                    const val = parseInt(input.value);
+                    const expected = correctAnswer[r][c];
+
+                    input.classList.remove('cell-correct', 'cell-wrong');
+
+                    if (val === expected) {
+                        input.classList.add('cell-correct');
+                    } else {
+                        input.classList.add('cell-wrong');
+                        allCorrect = false;
+                    }
+                });
+
+                if (allCorrect) {
+                    submitted = true;
+                    answerMatrix.classList.add('correct');
+                    feedbackEl.textContent = 'Correct!';
+                    feedbackEl.className = 'correct';
+                    btnSubmit.textContent = 'Submit';
+                    inputs.forEach(inp => inp.disabled = true);
+                } else {
+                    submitted = false;
+                    answerMatrix.classList.add('wrong');
+                    feedbackEl.textContent = 'Incorrect — try again';
+                    feedbackEl.className = 'wrong';
+                    btnSubmit.textContent = 'Resubmit';
+                }
+            }
+
+            function resetFeedback() {
+                submitted = false;
+                feedbackEl.textContent = '';
+                feedbackEl.className = '';
+                btnSubmit.textContent = 'Submit';
+                answerMatrix.classList.remove('correct', 'wrong');
+                const inputs = answerMatrix.querySelectorAll('input');
+                inputs.forEach(inp => {
+                    inp.classList.remove('cell-correct', 'cell-wrong');
+                    inp.disabled = false;
+                });
+            }
+
+            function generateProblem() {
+                if (randomMode) {
+                    M = randInt(1, 4);
+                    N = randInt(1, 4);
+                    K = randInt(1, 4);
+                    dimM.value = M;
+                    dimN.value = N;
+                    dimN2.value = N;
+                    dimK.value = K;
+                } else {
+                    M = parseInt(dimM.value);
+                    N = parseInt(dimN.value);
+                    K = parseInt(dimK.value);
+                }
+
+                matA = randomMatrix(M, N);
+                matB = randomMatrix(N, K);
+                correctAnswer = multiply(matA, matB);
+
+                resetFeedback();
+                renderProblem();
+                renderAnswerGrid();
+            }
+
+            // Submit / Resubmit
+            btnSubmit.addEventListener('click', () => {
+                if (submitted) return; // already correct, ignore
+                // Clear previous feedback styling before re-checking
+                answerMatrix.classList.remove('correct', 'wrong');
+                answerMatrix.querySelectorAll('input').forEach(inp => {
+                    inp.classList.remove('cell-correct', 'cell-wrong');
+                });
+                checkAnswer();
+            });
+
+            // New Problem
+            btnNew.addEventListener('click', generateProblem);
+
+            // Initialize
+            updateRandomState();
+            generateProblem();
+        });
+    </script>
+</body>
+</html>
